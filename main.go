@@ -12,6 +12,17 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+var (
+	taskBoxStyle = lipgloss.NewStyle().
+			Border(lipgloss.NormalBorder()).
+			Padding(0, 1).
+			Margin(0, 0, 1, 0)
+
+	selectedTaskBoxStyle = taskBoxStyle.
+				BorderForeground(lipgloss.Color("205")).
+				Background(lipgloss.Color("236"))
+)
+
 // @anveshreddy18 -- in the last make it iota to make it easy to extend
 type mode string
 
@@ -136,6 +147,24 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, cmd
 	}
+	if m.currentMode == editingMode {
+		var cmd tea.Cmd
+		m.additionTextInput, cmd = m.additionTextInput.Update(msg)
+		if keyMsg, ok := msg.(tea.KeyMsg); ok && keyMsg.String() == tea.KeyEnter.String() {
+			modifiedTaskName := m.additionTextInput.Value()
+			// if the modifiedTaskName is empty, that means the task should be deleted
+			if modifiedTaskName == "" {
+				m.removeTaskFromCurrentList(normalMode)
+			} else {
+				taskList := m.taskListPerMode[normalMode]
+				cursorInd := taskList.cursor
+				taskList.list[cursorInd].name = modifiedTaskName
+			}
+			m.currentMode = normalMode
+			return m, nil
+		}
+		return m, cmd
+	}
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		if key.Matches(msg, quitKeys) {
@@ -165,23 +194,38 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			switch m.currentMode {
 			case normalMode:
 				// remove the task from the normal mode and add it to the completed mode
-				curTask := m.removeTaskFromCurrentList()
+				curTask := m.removeTaskFromCurrentList(normalMode)
 
-				// now add this `curTask` into the completed task list. No need to adjust the cursor in the completed mode as the task gets added to the end of the list, so cursor doesn't get disturbed.
-				completedList := m.taskListPerMode[completedMode]
-				completedList.list = append(completedList.list, curTask)
+				// Only add if curTask is not empty
+				if curTask.name != "" {
+					completedList := m.taskListPerMode[completedMode]
+					completedList.list = append(completedList.list, curTask)
+				}
 			case editingMode:
 				// this should edit the task in the normalmode task list
 			}
 		case "d":
 			// whenever d is pressed on a task, it should be removed from that list, either in normalMode or completedMode.
-			m.removeTaskFromCurrentList()
+			m.removeTaskFromCurrentList(m.currentMode)
 		case "a":
 			// whenever 'a' is pressed, it should open up a screen which asks for the task name and when entered, it should add the task to normalMode tasklist
 			m.currentMode = additionMode
 			return m, textinput.Blink
 		case "e":
-			// whenever 'e' is pressed, it should open up a text input screen where the current task should already be filled, but the text should be editable, so upon pressing the enter, the task name should just get updated
+			// editing is only applicable in the normal mode
+			if m.currentMode != normalMode {
+				return m, nil
+			}
+			// Use normalMode to get the current task, not editingMode
+			curTaskList := m.taskListPerMode[normalMode]
+			cursorInd := curTaskList.cursor
+			if len(curTaskList.list) == 0 {
+				return m, nil
+			}
+			taskName := curTaskList.list[cursorInd].name
+			m.additionTextInput.SetValue(taskName)
+			m.currentMode = editingMode
+			return m, textinput.Blink
 		}
 		return m, nil
 	case errMsg:
@@ -211,24 +255,32 @@ func (m model) View() string {
 		// Show the task list
 		taskList := m.taskListPerMode[m.currentMode]
 		for i, task := range taskList.list {
-			linePrefix := " "
+			taskStr := fmt.Sprintf("#%d %s", task.id, task.name)
+			var box string
 			if i == taskList.cursor {
-				linePrefix = "▶"
+				box = selectedTaskBoxStyle.Render(taskStr)
+			} else {
+				box = taskBoxStyle.Render(taskStr)
 			}
-			b.WriteString(fmt.Sprintf("%s #%d %s\n", linePrefix, task.id, task.name))
+			b.WriteString(box + "\n")
 		}
 	case additionMode:
 		// Show the text input box which accepts keyboard input
 		b.WriteString(fmt.Sprintf("Name the task: %s\n", m.additionTextInput.View()))
+	case editingMode:
+		b.WriteString(fmt.Sprintf("Edit the task: %s\n", m.additionTextInput.View()))
 	}
 
 	return b.String()
 }
 
-func (m model) removeTaskFromCurrentList() Task {
-	// modify the list corresponding to the normal mode
-	currentList := m.taskListPerMode[m.currentMode]
+func (m model) removeTaskFromCurrentList(mode mode) Task {
+	// modify the list corresponding to the given mode
+	currentList := m.taskListPerMode[mode]
 	taskIND := currentList.cursor
+	if len(currentList.list) == 0 {
+		return Task{}
+	}
 	curTask := currentList.list[taskIND]
 	newCurrentList := []Task{}
 	for i, task := range currentList.list {
@@ -238,9 +290,12 @@ func (m model) removeTaskFromCurrentList() Task {
 	}
 	currentList.list = newCurrentList
 
-	// adjusting the cursor in the normal mode
-	if m.taskListPerMode[m.currentMode].cursor >= len(m.taskListPerMode[m.currentMode].list) {
-		m.taskListPerMode[m.currentMode].cursor = len(m.taskListPerMode[m.currentMode].list) - 1
+	// adjusting the cursor in the given mode
+	if m.taskListPerMode[mode].cursor >= len(m.taskListPerMode[mode].list) {
+		m.taskListPerMode[mode].cursor = len(m.taskListPerMode[mode].list) - 1
+	}
+	if m.taskListPerMode[mode].cursor < 0 {
+		m.taskListPerMode[mode].cursor = 0
 	}
 	return curTask
 }

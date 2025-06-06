@@ -13,6 +13,13 @@ This TUI application helps you manage your tasks efficiently from the terminal. 
 - **a**: Add a new task (switches to addition mode).
 - **s**: Switch to completed mode.
 
+## Editing Mode
+- Entered by pressing **e** on a task in Normal Mode.
+- The selected task's name is preloaded in the input box for editing.
+- Edit the task name as desired. Leave it empty if you want it to get deleted.
+- **Enter**: Save the changes and return to Normal Mode.
+- The task list will immediately reflect the updated name.
+
 ## Addition Mode
 - Enter the name of the new task.
 - **Enter**: Add the task (if input is not empty) and return to normal mode. If input is empty, return to normal mode without adding.

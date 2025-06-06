@@ -5,7 +5,7 @@ A terminal-based Todo List application built with Go and Bubbletea.
 ## Features
 - Add, edit, and complete tasks from your terminal
 - Keyboard-driven navigation and actions
-- Distinct modes for normal, addition, and completed tasks
+- Distinct modes for normal, addition, editing, and completed tasks
 - Clean, responsive TUI interface
 
 ## Getting Started
