@@ -1,19 +1,36 @@
-# bubbletea-app-template
+# Todo TUI
 
-A template repository to create [Bubble Tea][bubbletea] apps.
+A terminal-based Todo List application built with Go and Bubbletea.
 
-## Included
+## Features
+- Add, edit, and complete tasks from your terminal
+- Keyboard-driven navigation and actions
+- Distinct modes for normal, addition, and completed tasks
+- Clean, responsive TUI interface
 
-- a sample app that does nothing, so it includes all dependencies:
-	- [Bubble Tea][bubbletea]
-	- [Bubbles][bubbles]
-	- [Lip Gloss][lipgloss]
-- github actions workflows for build, test, lint and release
-- [GoReleaser][goreleaser] configs
-- [golangci-lint][lint] configs
+## Getting Started
 
-[bubbletea]: https://github.com/charmbracelet/bubbletea
-[bubbles]: https://github.com/charmbracelet/bubbles
-[lipgloss]: https://github.com/charmbracelet/lipgloss
-[goreleaser]: https://goreleaser.com
-[lint]: https://golangci-lint.run
+### Prerequisites
+- Go 1.23 or later
+
+### Installation
+Clone the repository and build the application:
+
+```sh
+git clone https://github.com/anveshreddy18/todo-tui.git
+cd todo-tui/todo-tui
+go build -o todo-tui
+```
+
+### Usage
+Run the application from your terminal:
+
+```sh
+./todo-tui
+```
+
+### Controls
+See [instructions.md](./instructions.md) for the full list of controls and usage details.
+
+## License
+MIT
