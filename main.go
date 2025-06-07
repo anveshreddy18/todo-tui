@@ -23,15 +23,31 @@ var (
 				Background(lipgloss.Color("236"))
 )
 
-// @anveshreddy18 -- in the last make it iota to make it easy to extend
-type mode string
+// Replace mode string with iota-based enum
+
+type mode int
 
 const (
-	normalMode    mode = "normal"   // this mode is for viewing the dasboard for the regular addition of tasks
-	completedMode mode = "done"     // this is for viewing the dashboard for the tasks that are done
-	additionMode  mode = "addition" // mode for adding the task, a new input bar opens where the task can be added.
-	editingMode   mode = "edit"     // the editing mode is used to identify & differentiate between similar actions performed in different modes.
+	normalMode    mode = iota // this mode is for viewing the dasboard for the regular addition of tasks
+	completedMode             // this is for viewing the dashboard for the tasks that are done
+	additionMode              // mode for adding the task, a new input bar opens where the task can be added.
+	editingMode               // the editing mode is used to identify & differentiate between similar actions performed in different modes.
 )
+
+func (m mode) String() string {
+	switch m {
+	case normalMode:
+		return "normal"
+	case completedMode:
+		return "done"
+	case additionMode:
+		return "addition"
+	case editingMode:
+		return "edit"
+	default:
+		return "unknown"
+	}
+}
 
 type Task struct {
 	name string
@@ -249,7 +265,7 @@ func (m model) View() string {
 		return b.String() + "\n"
 	}
 	// actual processing logic
-	b.WriteString(fmt.Sprintf("%s Mode\n\n", m.currentMode))
+	b.WriteString(fmt.Sprintf("%s Mode\n\n", m.currentMode.String()))
 	switch m.currentMode {
 	case normalMode, completedMode:
 		// Show the task list
